@@ -1,0 +1,64 @@
+# ─── Gradle ───────────────────────────────────────────────
+.gradle/
+build/
+**/build/
+
+# ─── Local config (machine-specific) ─────────────────────
+local.properties
+*.local.properties
+
+# ─── Android Studio / IntelliJ ────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/modules.xml
+.idea/navEditor.xml
+
+# ─── Keystore / Signing (CRITICAL - never commit!) ────────
+*.jks
+*.keystore
+*.p12
+keystore.properties
+release-keystore.jks
+upload-keystore.jks
+
+# ─── Secrets & API keys (CRITICAL - never commit!) ────────
+google-services.json       # contains Firebase project info
+secrets.properties
+apikeys.properties
+*.env
+
+# ─── OS files ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Generated / compiled ─────────────────────────────────
+*.class
+*.dex
+*.ap_
+*.apk
+*.aab
+*.aar
+bin/
+gen/
+out/
+release/
+
+# ─── Captures (Android Studio profiler screenshots) ───────
+captures/
+
+# ─── Navigation editor backups ────────────────────────────
+.navigation/
+
+# ─── Lint ─────────────────────────────────────────────────
+lint/
+*.lint.xml
