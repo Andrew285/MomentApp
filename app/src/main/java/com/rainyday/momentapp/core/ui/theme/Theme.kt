@@ -57,7 +57,8 @@ private val lightColorScheme = lightColorScheme(
 
 @Composable
 fun MomentAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+//    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
 //    val colorScheme = when {
