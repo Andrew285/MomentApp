@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -44,6 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil3.Uri
 import com.rainyday.momentapp.core.ui.screens.BaseScreen
 import com.rainyday.momentapp.features.events.domain.models.Event
@@ -52,28 +55,50 @@ import com.rainyday.momentapp.features.events.ui.viewmodel.EventsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventsScreen(
-    eventsViewModel: EventsViewModel = hiltViewModel()
+fun BoxScope.EventsScreen(
+    eventsViewModel: EventsViewModel = hiltViewModel(),
+    onAddEventScreenNavigate: () -> Unit,
 ) {
     val uiState = eventsViewModel.eventsUiState.collectAsStateWithLifecycle()
 
-    Box(Modifier.fillMaxSize()) {
-        when {
-            uiState.value.isLoading && uiState.value.events.isEmpty() ->
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
-            uiState.value.error != null && uiState.value.events.isEmpty() -> {}
+    when {
+        uiState.value.isLoading && uiState.value.events.isEmpty() ->
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
+        uiState.value.error != null && uiState.value.events.isEmpty() -> {}
 //                    ErrorContent(uiState.error!!) {
 //                        viewModel.onEvent(EventsListUiEvent.Refresh)
 //                    }
-            uiState.value.events.isEmpty() -> { }
+        uiState.value.events.isEmpty() -> { }
 //                    EmptyContent { viewModel.navigateToAddEvent() }
-            else ->
-                EventsListContent(
-                    events = uiState.value.events,
-                    onEventClick = { /* viewModel.navigateToDetail(it.id) */ }
+        else -> {
+            EventsListContent(
+                events = uiState.value.events,
+                onEventClick = { /* viewModel.navigateToDetail(it.id) */ }
+            )
+
+            FloatingActionButton(
+                onClick = {
+                    onAddEventScreenNavigate()
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Event"
                 )
+            }
         }
     }
+
+//    BaseScreen(
+//        mainSmallImage = "",
+//        navController = navController
+//    ) { padding ->
+//        Box(Modifier.fillMaxSize().padding(padding)) {
+//
+//        }
+//    }
 }
 
 

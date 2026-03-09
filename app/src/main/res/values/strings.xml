@@ -2,4 +2,15 @@
     <string name="app_name">MomentApp</string>
     <string name="our_story">Наша історія</string>
     <string name="with_love_description">З любов\'ю❤️</string>
+    <string name="event_name">Назва події</string>
+    <string name="new_event">Нова подія</string>
+    <string name="description">Опис</string>
+    <string name="date">Дата</string>
+    <string name="create_event">Створити подію</string>
+    <string name="event_title_placeholder">Романтична вечеря</string>
+    <string name="event_description_placeholder">Розкажіть про вашу подію...</string>
+
+
+    <!--  Content Descriptions  -->
+    <string name="close_add_event_screen_content_description" translatable="false">"Close add event screen"</string>
 </resources>

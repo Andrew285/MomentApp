@@ -1,7 +1,7 @@
 package com.rainyday.momentapp.core.data.di
 
 import com.google.firebase.auth.FirebaseAuth
-import com.rainyday.momentapp.core.data.network.FirebaseFunctionsApi
+import com.rainyday.momentapp.features.events.data.remote.IEventsApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -63,7 +63,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun getFirebaseFunctionsApi(retrofit: Retrofit): FirebaseFunctionsApi {
-        return retrofit.create(FirebaseFunctionsApi::class.java)
+    fun getEventsApiService(retrofit: Retrofit): IEventsApiService {
+        return retrofit.create(IEventsApiService::class.java)
     }
 }

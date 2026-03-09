@@ -1,7 +1,7 @@
 package com.rainyday.momentapp.features.events.di
 
-import com.rainyday.momentapp.features.events.data.repository.EventsRepositoryImpl
-import com.rainyday.momentapp.features.events.domain.repository.IEventsRepository
+import com.rainyday.momentapp.features.events.data.repository.EventsRemoteRepositoryImpl
+import com.rainyday.momentapp.features.events.domain.repository.IEventsRemoteRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -14,5 +14,5 @@ abstract class EventsModule {
 
     @Binds
     @Singleton
-    abstract fun bindEventRepository(impl: EventsRepositoryImpl) : IEventsRepository
+    abstract fun bindEventRepository(impl: EventsRemoteRepositoryImpl) : IEventsRemoteRepository
 }
