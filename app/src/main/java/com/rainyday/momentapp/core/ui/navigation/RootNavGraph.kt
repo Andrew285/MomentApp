@@ -1,10 +1,8 @@
 package com.rainyday.momentapp.core.ui.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,6 +12,8 @@ import com.rainyday.momentapp.features.events.ui.screens.AddEventScreen
 @Composable
 fun RootNavGraph(
     navHostController: NavHostController,
+    showSnackBar: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navHostController,
@@ -24,7 +24,7 @@ fun RootNavGraph(
             composable(RootScreen.Home.route) {
                 BaseScreen(
                     mainSmallImage = "",
-                    rootNavController = navHostController
+                    rootNavController = navHostController,
                 )
             }
 
@@ -32,7 +32,8 @@ fun RootNavGraph(
                 AddEventScreen(
                     onClose = {
                         navHostController.popBackStack()
-                    }
+                    },
+                    showSnackBar = showSnackBar
                 )
             }
         }

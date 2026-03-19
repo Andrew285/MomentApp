@@ -9,6 +9,11 @@
     <string name="create_event">Створити подію</string>
     <string name="event_title_placeholder">Романтична вечеря</string>
     <string name="event_description_placeholder">Розкажіть про вашу подію...</string>
+    <string name="repeat">Повторити</string>
+    <string name="events_screen_empty_state">Скоріше додайте нові події, щоб зустрітись зі своєю коханою людиною 🥰</string>
+    <string name="snack_bar_event_create_success">Подія успішно створена!</string>
+    <string name="snack_bar_event_create_fail">Подія, на жаль, не додалась. Перевірте введені дані</string>
+    <string name="snack_bar_unknown_error">Сталась невідома помилка. Спробуйте ще раз</string>
 
 
     <!--  Content Descriptions  -->

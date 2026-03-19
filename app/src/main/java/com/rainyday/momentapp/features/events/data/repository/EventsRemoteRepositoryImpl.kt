@@ -17,7 +17,7 @@ class EventsRemoteRepositoryImpl @Inject constructor(
     private val apiInstance: IEventsApiService
 ) : IEventsRemoteRepository {
 
-    override suspend fun getEvents(): Flow<Result<List<Event>>> = flow {
+    override fun getEvents(): Flow<Result<List<Event>>> = flow {
         emit(Result.Loading)
 
         try {
@@ -44,7 +44,7 @@ class EventsRemoteRepositoryImpl @Inject constructor(
     }
 
     override suspend fun createEvent(event: Event): Result<Event> {
-        try {
+        return try {
             val request = CreateEventRequest(
                 title = event.title,
                 description = event.description,
@@ -54,7 +54,7 @@ class EventsRemoteRepositoryImpl @Inject constructor(
             )
 
             val response = apiInstance.createEvent(request)
-            return if (response.isSuccessful && response.body()?.success == true) {
+            if (response.isSuccessful && response.body()?.success == true) {
                 Result.Success(
                     data = response.body()!!.data!!.toDomain()
                 )
@@ -64,7 +64,7 @@ class EventsRemoteRepositoryImpl @Inject constructor(
                 )
             }
         } catch (e: Exception) {
-            return Result.Error(
+            Result.Error(
                 message = e.message ?: "Network error"
             )
         }

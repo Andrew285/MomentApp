@@ -1,6 +1,5 @@
 package com.rainyday.momentapp.core.ui.navigation
 
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -10,9 +9,9 @@ import com.rainyday.momentapp.features.stats.ui.screens.StatsScreen
 import com.rainyday.momentapp.features.wishlist.ui.screens.WishlistScreen
 
 @Composable
-fun BoxScope.HomeNavGraph(
+fun HomeNavGraph(
     rootNavHostController: NavHostController,
-    navHostController: NavHostController
+    navHostController: NavHostController,
 ) {
      NavHost(
         navController = navHostController,
@@ -22,6 +21,9 @@ fun BoxScope.HomeNavGraph(
                 EventsScreen(
                     onAddEventScreenNavigate = {
                         rootNavHostController.navigate(RootScreen.AddEvent.route)
+                    },
+                    onEventDetailsScreenNavigate = {
+
                     }
                 )
             }

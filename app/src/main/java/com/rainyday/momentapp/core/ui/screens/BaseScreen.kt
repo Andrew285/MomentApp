@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
@@ -14,6 +15,7 @@ import com.rainyday.momentapp.R
 import com.rainyday.momentapp.core.ui.navigation.BottomNavigationBar
 import com.rainyday.momentapp.core.ui.navigation.CustomTopAppBar
 import com.rainyday.momentapp.core.ui.navigation.HomeNavGraph
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +26,7 @@ fun BaseScreen(
 ) {
     val topBarTitle = stringResource(R.string.our_story)
     val topBarDescription = stringResource(R.string.with_love_description)
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -45,7 +48,7 @@ fun BaseScreen(
         ) {
             HomeNavGraph(
                 rootNavHostController = rootNavController,
-                navHostController = navController
+                navHostController = navController,
             )
         }
     }

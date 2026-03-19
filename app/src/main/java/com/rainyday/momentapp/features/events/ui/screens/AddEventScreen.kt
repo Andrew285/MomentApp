@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
@@ -18,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,16 +32,69 @@ import com.rainyday.momentapp.core.ui.components.DateTimeComponent
 import com.rainyday.momentapp.core.ui.components.MultiLineTextFieldComponent
 import com.rainyday.momentapp.core.ui.components.TextFieldComponent
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
-import com.rainyday.momentapp.features.events.ui.viewmodel.AddEventViewModel
+import com.rainyday.momentapp.features.events.domain.models.Event
+import com.rainyday.momentapp.features.events.ui.intents.EventsListIntent
+import com.rainyday.momentapp.features.events.ui.state.AddEventUiState
+import com.rainyday.momentapp.features.events.ui.state.EventsSideEffect
+import com.rainyday.momentapp.features.events.ui.viewmodel.EventsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEventScreen(
-    viewModel: AddEventViewModel = hiltViewModel(),
+    viewModel: EventsViewModel = hiltViewModel(),
+    onClose: () -> Unit,
+    showSnackBar: (String) -> Unit,
+) {
+    val uiState by viewModel.addEventUiState.collectAsStateWithLifecycle()
+    val eventAddedSuccessfullyString = stringResource(R.string.snack_bar_event_create_success)
+    val eventAddedFailedString = stringResource(R.string.snack_bar_event_create_fail)
+    val unknownErrorString = stringResource(R.string.snack_bar_unknown_error)
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffects.collect { effect ->
+            when (effect) {
+                EventsSideEffect.EventAddedSuccessfully -> {
+                    showSnackBar(eventAddedSuccessfullyString)
+                    onClose()
+                }
+                EventsSideEffect.EventAddedFailed -> {
+                    showSnackBar(eventAddedFailedString)
+                }
+                is EventsSideEffect.UnknownError -> {
+                    showSnackBar(unknownErrorString)
+                }
+                is EventsSideEffect.ReloadEvents -> Unit
+            }
+        }
+    }
+
+    AddScreenContent(
+        uiState = uiState,
+        onTitleUpdated = { newTitle ->
+            viewModel.handleIntent(EventsListIntent.UpdateTitle(newTitle))
+        },
+        onDescriptionUpdated = { newDescription ->
+            viewModel.handleIntent(EventsListIntent.UpdateDescription(newDescription))
+        },
+        onDateUpdated = { selectedMillis ->
+            viewModel.handleIntent(EventsListIntent.UpdateDate(selectedMillis))
+        },
+        onAddEvent = { event ->
+            viewModel.handleIntent(EventsListIntent.AddEvent(event))
+        },
+        onClose = onClose
+    )
+}
+
+@Composable
+fun AddScreenContent(
+    uiState: AddEventUiState,
+    onTitleUpdated: (String) -> Unit,
+    onDescriptionUpdated: (String) -> Unit,
+    onDateUpdated: (Long) -> Unit,
+    onAddEvent: (Event) -> Unit,
     onClose: () -> Unit,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
     Box(
         contentAlignment = Alignment.TopStart,
         modifier = Modifier
@@ -49,30 +102,33 @@ fun AddEventScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(10.dp)
     ) {
-        // Screen Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.new_event),
-                modifier = Modifier
-                    .weight(1f)
-            )
-
-            Icon(
-                imageVector = Icons.Default.Clear,
-                contentDescription = stringResource(R.string.close_add_event_screen_content_description),
-                modifier = Modifier.clickable(onClick = { onClose() } )
-            )
-        }
-
         Column(
             verticalArrangement = Arrangement.spacedBy(18.dp),
             modifier = Modifier
                 .wrapContentSize(Alignment.TopStart)
         ) {
+            // Screen Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 40.dp, horizontal = 10.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.new_event),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .weight(1f)
+                )
+
+                Icon(
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = stringResource(R.string.close_add_event_screen_content_description),
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.clickable(onClick = { onClose() } )
+                )
+            }
+
             // Title
             TextFieldComponent(
                 title = stringResource(R.string.event_name),
@@ -84,7 +140,7 @@ fun AddEventScreen(
                     )
                 },
                 onValueChange = { newTitle ->
-                    viewModel.updateTitle(newTitle)
+                    onTitleUpdated(newTitle)
                 }
             )
 
@@ -99,7 +155,7 @@ fun AddEventScreen(
                     )
                 },
                 onValueChange = { newDescription ->
-                    viewModel.updateDescription(newDescription)
+                    onDescriptionUpdated(newDescription)
                 }
             )
 
@@ -108,7 +164,7 @@ fun AddEventScreen(
                 title = stringResource(R.string.date),
                 selectedDateInMilliseconds = uiState.dateTimeInMillis,
                 onSelectedDate = { selectedMillis ->
-                    viewModel.updateDate(selectedMillis)
+                    onDateUpdated(selectedMillis)
                 }
             )
 
@@ -118,8 +174,12 @@ fun AddEventScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 onClick = {
-                    viewModel.createEvent()
-                    onClose()
+                    val event = Event(
+                        title = uiState.title,
+                        description = uiState.description,
+                        date = uiState.dateTimeInMillis,
+                    )
+                    onAddEvent(event)
                 }
             )
         }
@@ -130,7 +190,12 @@ fun AddEventScreen(
 @Composable
 fun PreviewAddEventScreen() {
     MomentAppTheme {
-        AddEventScreen(
+        AddScreenContent(
+            uiState = AddEventUiState(),
+            onTitleUpdated = {},
+            onDescriptionUpdated = {},
+            onDateUpdated = {},
+            onAddEvent = {},
             onClose = {}
         )
     }

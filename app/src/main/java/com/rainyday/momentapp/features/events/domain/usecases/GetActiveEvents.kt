@@ -9,7 +9,7 @@ import javax.inject.Inject
 class GetActiveEvents @Inject constructor(
     private val repository: IEventsRemoteRepository
 ) {
-    suspend operator fun invoke(): Flow<Result<List<Event>>> {
+    operator fun invoke(): Flow<Result<List<Event>>> {
         return repository.getEvents()
     }
 }
