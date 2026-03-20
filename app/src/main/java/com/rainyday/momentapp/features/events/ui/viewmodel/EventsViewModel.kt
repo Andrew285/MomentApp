@@ -4,10 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rainyday.momentapp.core.data.models.Result
 import com.rainyday.momentapp.features.events.domain.models.Event
+import com.rainyday.momentapp.features.events.domain.models.EventParamsRequest
 import com.rainyday.momentapp.features.events.domain.usecases.CreateEventUseCase
+import com.rainyday.momentapp.features.events.domain.usecases.DeleteEventUseCase
 import com.rainyday.momentapp.features.events.domain.usecases.GetActiveEvents
+import com.rainyday.momentapp.features.events.domain.usecases.GetEventByIdUseCase
+import com.rainyday.momentapp.features.events.domain.usecases.UpdateEventUseCase
 import com.rainyday.momentapp.features.events.ui.intents.EventsListIntent
-import com.rainyday.momentapp.features.events.ui.state.AddEventUiState
+import com.rainyday.momentapp.features.events.ui.state.AddOrUpdateEventUiState
 import com.rainyday.momentapp.features.events.ui.state.EventsSideEffect
 import com.rainyday.momentapp.features.events.ui.state.EventsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +22,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,13 +29,16 @@ import javax.inject.Inject
 class EventsViewModel @Inject constructor(
     private val getActiveEvents: GetActiveEvents,
     private val createEventUseCase: CreateEventUseCase,
+    private val updateEventUseCase: UpdateEventUseCase,
+    private val deleteEventUseCase: DeleteEventUseCase,
+    private val getEventByIdUseCase: GetEventByIdUseCase,
 ): ViewModel() {
 
     private val _eventsUiState = MutableStateFlow(EventsUiState())
     val eventsUiState: StateFlow<EventsUiState> = _eventsUiState.asStateFlow()
 
-    private val _addEventUiState = MutableStateFlow(AddEventUiState())
-    val addEventUiState: StateFlow<AddEventUiState> = _addEventUiState.asStateFlow()
+    private val _addOrUpdateEventUiState = MutableStateFlow(AddOrUpdateEventUiState())
+    val addOrUpdateEventUiState: StateFlow<AddOrUpdateEventUiState> = _addOrUpdateEventUiState.asStateFlow()
 
     private val _sideEffects = MutableSharedFlow<EventsSideEffect>()
     val sideEffects: SharedFlow<EventsSideEffect> = _sideEffects.asSharedFlow()
@@ -43,12 +49,52 @@ class EventsViewModel @Inject constructor(
 
     fun handleIntent(intent: EventsListIntent) {
         when (intent) {
+            is EventsListIntent.PreLoadEventBeforeEditing -> preLoadEvent(intent.eventId)
             is EventsListIntent.LoadEvents -> loadEvents()
             is EventsListIntent.RefreshEvents -> refreshEvents()
-            is EventsListIntent.AddEvent -> addEvent(intent.event)
+            is EventsListIntent.SaveEvent -> saveEvent(intent.params)
             is EventsListIntent.UpdateTitle -> updateTitle(intent.title)
             is EventsListIntent.UpdateDescription -> updateDescription(intent.description)
             is EventsListIntent.UpdateDate -> updateDate(intent.date)
+        }
+    }
+
+    fun preLoadEvent(eventId: String) {
+        viewModelScope.launch {
+            try {
+                val result = getEventByIdUseCase(eventId)
+                when (result) {
+                    is Result.Success -> {
+                        _addOrUpdateEventUiState.update {
+                            it.copy(
+                                title = result.data.title,
+                                description = result.data.description,
+                                image = "",
+                                dateTimeInMillis = result.data.date,
+                                dateTimeDisplay = "",
+                                location = "",
+                                dateError = "",
+                            )
+                        }
+                    }
+                    is Result.Error -> {
+                        _addOrUpdateEventUiState.update {
+                            it.copy(
+                                title = "",
+                                description = "",
+                                image = "",
+                                dateTimeInMillis = 0,
+                                dateTimeDisplay = "",
+                                location = "",
+                                dateError = "",
+                            )
+                        }
+                    }
+                    is Result.Loading -> Unit
+                }
+            } catch (e: Exception) {
+                Result.Error(e.message.toString())
+            }
         }
     }
 
@@ -133,7 +179,7 @@ class EventsViewModel @Inject constructor(
     }
 
     fun updateTitle(title: String) {
-        _addEventUiState.update {
+        _addOrUpdateEventUiState.update {
             it.copy(
                 title = title
             )
@@ -141,7 +187,7 @@ class EventsViewModel @Inject constructor(
     }
 
     fun updateDescription(description: String) {
-        _addEventUiState.update {
+        _addOrUpdateEventUiState.update {
             it.copy(
                 description = description
             )
@@ -149,28 +195,87 @@ class EventsViewModel @Inject constructor(
     }
 
     fun updateDate(date: Long) {
-        _addEventUiState.update {
+        _addOrUpdateEventUiState.update {
             it.copy(
                 dateTimeInMillis = date
             )
         }
     }
 
-    fun addEvent(event: Event) {
+    fun saveEvent(params: EventParamsRequest) {
+        when (params) {
+            is EventParamsRequest.CreateEventParamsReq -> {
+                createEvent(params)
+            }
+            is EventParamsRequest.UpdateEventParamsReq -> {
+                updateEvent(params)
+            }
+        }
+    }
+
+    fun createEvent(createEventParams: EventParamsRequest.CreateEventParamsReq) {
         viewModelScope.launch {
             _eventsUiState.update { it.copy(isLoading = true) }
 
             try {
-                when (val result = createEventUseCase(event)) {
+                when (val result = createEventUseCase(createEventParams)) {
                     is Result.Success -> {
                         _eventsUiState.update { it.copy(isLoading = false, error = null) }
-                        _addEventUiState.update{ AddEventUiState() }
+                        _addOrUpdateEventUiState.update{ AddOrUpdateEventUiState() }
                         _sideEffects.emit(EventsSideEffect.EventAddedSuccessfully)
                         _sideEffects.emit(EventsSideEffect.ReloadEvents)
                     }
                     is Result.Error -> {
                         _eventsUiState.update { it.copy(isLoading = false, error = result.message) }
                         _sideEffects.emit(EventsSideEffect.EventAddedFailed)
+                    }
+                    is Result.Loading -> Unit
+                }
+            } catch (e: Exception) {
+                _sideEffects.emit(EventsSideEffect.UnknownError(e.message.toString()))
+            }
+        }
+    }
+
+    fun updateEvent(params: EventParamsRequest.UpdateEventParamsReq) {
+        viewModelScope.launch {
+            _eventsUiState.update { it.copy(isLoading = true) }
+
+            try {
+                when (val result = updateEventUseCase(params)) {
+                    is Result.Success -> {
+                        _eventsUiState.update { it.copy(isLoading = false, error = null) }
+                        _addOrUpdateEventUiState.update{ AddOrUpdateEventUiState() }
+                        _sideEffects.emit(EventsSideEffect.EventUpdatedSuccessfully)
+                        _sideEffects.emit(EventsSideEffect.ReloadEvents)
+                    }
+                    is Result.Error -> {
+                        _eventsUiState.update { it.copy(isLoading = false, error = result.message) }
+                        _sideEffects.emit(EventsSideEffect.EventUpdatedFailed)
+                    }
+                    is Result.Loading -> Unit
+                }
+            } catch (e: Exception) {
+                _sideEffects.emit(EventsSideEffect.UnknownError(e.message.toString()))
+            }
+        }
+    }
+
+    fun deleteEvent(id: String) {
+        viewModelScope.launch {
+            _eventsUiState.update { it.copy(isLoading = true) }
+
+            try {
+                when (val result = deleteEventUseCase(id)) {
+                    is Result.Success -> {
+                        _eventsUiState.update { it.copy(isLoading = false, error = null) }
+                        _addOrUpdateEventUiState.update{ AddOrUpdateEventUiState() }
+                        _sideEffects.emit(EventsSideEffect.EventDeletedSuccessfully)
+                        _sideEffects.emit(EventsSideEffect.ReloadEvents)
+                    }
+                    is Result.Error -> {
+                        _eventsUiState.update { it.copy(isLoading = false, error = result.message) }
+                        _sideEffects.emit(EventsSideEffect.EventDeletedFailed)
                     }
                     is Result.Loading -> Unit
                 }

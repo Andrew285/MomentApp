@@ -1,6 +1,7 @@
 package com.rainyday.momentapp.core.ui.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
@@ -10,12 +11,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
 
 @Composable
+fun ErrorButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BasicButton(
+        text = text,
+        containerColor = MaterialTheme.colorScheme.error,
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+@Composable
 fun BasicButton(
     text: String,
+    containerColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -23,7 +40,7 @@ fun BasicButton(
         onClick = onClick,
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors().copy(
-            containerColor = MaterialTheme.colorScheme.onPrimaryContainer
+            containerColor = containerColor
         ),
         modifier = modifier,
     ) {
@@ -44,10 +61,17 @@ fun PreviewBasicButton() {
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            BasicButton(
-                text = "Додати",
-                onClick = {},
-            )
+            Column {
+                BasicButton(
+                    text = "Додати",
+                    onClick = {},
+                )
+
+                ErrorButton(
+                    text = "Видалити",
+                    onClick = {}
+                )
+            }
         }
     }
 }

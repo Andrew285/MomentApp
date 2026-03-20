@@ -35,6 +35,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rainyday.momentapp.R
 import com.rainyday.momentapp.core.ui.components.BasicButton
+import com.rainyday.momentapp.core.ui.components.EmptyState
+import com.rainyday.momentapp.core.ui.components.ErrorState
+import com.rainyday.momentapp.core.ui.components.LoadingContentState
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
 import com.rainyday.momentapp.features.events.domain.models.Event
 import com.rainyday.momentapp.features.events.ui.components.EventCard
@@ -48,7 +51,7 @@ import com.rainyday.momentapp.features.events.ui.viewmodel.EventsViewModel
 fun EventsScreen(
     eventsViewModel: EventsViewModel = hiltViewModel(),
     onAddEventScreenNavigate: () -> Unit,
-    onEventDetailsScreenNavigate: () -> Unit,
+    onEventDetailsScreenNavigate: (String) -> Unit,
 ) {
     val uiState by eventsViewModel.eventsUiState.collectAsStateWithLifecycle()
 
@@ -77,7 +80,7 @@ fun EventsScreen(
 fun EventsScreenContent(
     uiState: EventsUiState,
     onAddEventScreenNavigate: () -> Unit,
-    onEventDetailsScreenNavigate: () -> Unit,
+    onEventDetailsScreenNavigate: (String) -> Unit,
     onRefreshEvents: () -> Unit,
 ) {
     Box(
@@ -86,7 +89,7 @@ fun EventsScreenContent(
     ) {
         when {
             uiState.isLoading && uiState.events.isEmpty() ->
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
+                LoadingContentState()
 
             uiState.error != null && uiState.events.isEmpty() -> ErrorState(uiState.error) {
                 onRefreshEvents()
@@ -99,8 +102,8 @@ fun EventsScreenContent(
                     onRefreshEvents = {
                         onRefreshEvents()
                     },
-                    onEventClick = {
-                        onEventDetailsScreenNavigate()
+                    onEventClick = { event ->
+                        onEventDetailsScreenNavigate(event.id)
                     }
                 )
 
@@ -122,51 +125,6 @@ fun EventsScreenContent(
         }
     }
 }
-
-
-@Composable
-fun ErrorState(
-    errorMessage: String,
-    onBtnRetry: () -> Unit,
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Column {
-            Text(
-                text = errorMessage
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            BasicButton(
-                text = stringResource(R.string.repeat),
-                onClick = { onBtnRetry() },
-                modifier = Modifier
-                    .padding(horizontal = 30.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun EmptyState() {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Text(
-            text = stringResource(R.string.events_screen_empty_state),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onPrimary,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

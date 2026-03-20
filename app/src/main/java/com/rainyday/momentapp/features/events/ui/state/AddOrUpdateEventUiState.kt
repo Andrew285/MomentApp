@@ -1,6 +1,7 @@
 package com.rainyday.momentapp.features.events.ui.state
 
-data class AddEventUiState(
+data class AddOrUpdateEventUiState(
+    val id: String = "",
     val title: String = "",
     val description: String = "",
     val image: String? = null,

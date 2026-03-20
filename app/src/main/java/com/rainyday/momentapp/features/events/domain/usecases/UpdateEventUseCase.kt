@@ -4,14 +4,12 @@ import com.rainyday.momentapp.core.data.models.Result
 import com.rainyday.momentapp.features.events.domain.models.Event
 import com.rainyday.momentapp.features.events.domain.models.EventParamsRequest
 import com.rainyday.momentapp.features.events.domain.repository.IEventsRemoteRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
-class CreateEventUseCase @Inject constructor(
-    private val eventsRepository: IEventsRemoteRepository
+class UpdateEventUseCase @Inject constructor(
+    private val repository: IEventsRemoteRepository
 ) {
-    suspend operator fun invoke(createEventParamsReq: EventParamsRequest.CreateEventParamsReq): Result<Event> {
-       return eventsRepository.createEvent(createEventParamsReq)
+    suspend operator fun invoke(paramsReq: EventParamsRequest.UpdateEventParamsReq): Result<Event> {
+        return repository.updateEvent(paramsReq)
     }
 }

@@ -33,32 +33,58 @@ import com.rainyday.momentapp.core.ui.components.MultiLineTextFieldComponent
 import com.rainyday.momentapp.core.ui.components.TextFieldComponent
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
 import com.rainyday.momentapp.features.events.domain.models.Event
+import com.rainyday.momentapp.features.events.domain.models.EventParamsRequest
 import com.rainyday.momentapp.features.events.ui.intents.EventsListIntent
-import com.rainyday.momentapp.features.events.ui.state.AddEventUiState
+import com.rainyday.momentapp.features.events.ui.state.AddOrUpdateEventUiState
 import com.rainyday.momentapp.features.events.ui.state.EventsSideEffect
 import com.rainyday.momentapp.features.events.ui.viewmodel.EventsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEventScreen(
+fun AddOrUpdateEventScreen(
+    eventId: String? = null,
     viewModel: EventsViewModel = hiltViewModel(),
     onClose: () -> Unit,
     showSnackBar: (String) -> Unit,
 ) {
-    val uiState by viewModel.addEventUiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.addOrUpdateEventUiState.collectAsStateWithLifecycle()
     val eventAddedSuccessfullyString = stringResource(R.string.snack_bar_event_create_success)
+    val eventUpdatedSuccessfullyString = stringResource(R.string.snack_bar_event_update_success)
+    val eventDeletedSuccessfullyString = stringResource(R.string.snack_bar_event_delete_success)
     val eventAddedFailedString = stringResource(R.string.snack_bar_event_create_fail)
+    val eventUpdatedFailedString = stringResource(R.string.snack_bar_event_update_fail)
+    val eventDeletedFailedString = stringResource(R.string.snack_bar_event_delete_fail)
     val unknownErrorString = stringResource(R.string.snack_bar_unknown_error)
 
     LaunchedEffect(Unit) {
+        // preload event data before editing
+        eventId?.let {
+            viewModel.handleIntent(EventsListIntent.PreLoadEventBeforeEditing(it))
+        }
+
+        // collect side effects
         viewModel.sideEffects.collect { effect ->
             when (effect) {
                 EventsSideEffect.EventAddedSuccessfully -> {
                     showSnackBar(eventAddedSuccessfullyString)
                     onClose()
                 }
+                EventsSideEffect.EventUpdatedSuccessfully -> {
+                    showSnackBar(eventUpdatedSuccessfullyString)
+                    onClose()
+                }
+                EventsSideEffect.EventDeletedSuccessfully -> {
+                    showSnackBar(eventDeletedSuccessfullyString)
+                    onClose()
+                }
                 EventsSideEffect.EventAddedFailed -> {
                     showSnackBar(eventAddedFailedString)
+                }
+                EventsSideEffect.EventUpdatedFailed -> {
+                    showSnackBar(eventUpdatedFailedString)
+                }
+                EventsSideEffect.EventDeletedFailed -> {
+                    showSnackBar(eventDeletedFailedString)
                 }
                 is EventsSideEffect.UnknownError -> {
                     showSnackBar(unknownErrorString)
@@ -68,8 +94,10 @@ fun AddEventScreen(
         }
     }
 
-    AddScreenContent(
+
+    AddOrUpdateScreenContent(
         uiState = uiState,
+        isEditing = eventId != null,
         onTitleUpdated = { newTitle ->
             viewModel.handleIntent(EventsListIntent.UpdateTitle(newTitle))
         },
@@ -79,20 +107,21 @@ fun AddEventScreen(
         onDateUpdated = { selectedMillis ->
             viewModel.handleIntent(EventsListIntent.UpdateDate(selectedMillis))
         },
-        onAddEvent = { event ->
-            viewModel.handleIntent(EventsListIntent.AddEvent(event))
+        onSaveEvent = { params ->
+            viewModel.handleIntent(EventsListIntent.SaveEvent(params))
         },
         onClose = onClose
     )
 }
 
 @Composable
-fun AddScreenContent(
-    uiState: AddEventUiState,
+fun AddOrUpdateScreenContent(
+    uiState: AddOrUpdateEventUiState,
+    isEditing: Boolean,
     onTitleUpdated: (String) -> Unit,
     onDescriptionUpdated: (String) -> Unit,
     onDateUpdated: (Long) -> Unit,
-    onAddEvent: (Event) -> Unit,
+    onSaveEvent: (EventParamsRequest) -> Unit,
     onClose: () -> Unit,
 ) {
     Box(
@@ -114,7 +143,7 @@ fun AddScreenContent(
                     .padding(vertical = 40.dp, horizontal = 10.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.new_event),
+                    text = stringResource(if (!isEditing) R.string.new_event else R.string.edit_event),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
@@ -174,12 +203,22 @@ fun AddScreenContent(
                 modifier = Modifier
                     .fillMaxWidth(),
                 onClick = {
-                    val event = Event(
-                        title = uiState.title,
-                        description = uiState.description,
-                        date = uiState.dateTimeInMillis,
-                    )
-                    onAddEvent(event)
+                    val params = if (isEditing) {
+                        EventParamsRequest.UpdateEventParamsReq(
+                            id = uiState.id,
+                            title = uiState.title,
+                            description = uiState.description,
+                            date = uiState.dateTimeInMillis,
+                        )
+                    }
+                    else {
+                        EventParamsRequest.CreateEventParamsReq(
+                            title = uiState.title,
+                            description = uiState.description,
+                            date = uiState.dateTimeInMillis,
+                        )
+                    }
+                    onSaveEvent(params)
                 }
             )
         }
@@ -190,12 +229,13 @@ fun AddScreenContent(
 @Composable
 fun PreviewAddEventScreen() {
     MomentAppTheme {
-        AddScreenContent(
-            uiState = AddEventUiState(),
+        AddOrUpdateScreenContent(
+            uiState = AddOrUpdateEventUiState(),
+            isEditing = false,
             onTitleUpdated = {},
             onDescriptionUpdated = {},
             onDateUpdated = {},
-            onAddEvent = {},
+            onSaveEvent = {},
             onClose = {}
         )
     }

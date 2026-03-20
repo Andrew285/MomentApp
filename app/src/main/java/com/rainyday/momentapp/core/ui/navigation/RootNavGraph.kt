@@ -4,10 +4,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.rainyday.momentapp.core.ui.navigation.RootScreen.UpdateEvent
 import com.rainyday.momentapp.core.ui.screens.BaseScreen
-import com.rainyday.momentapp.features.events.ui.screens.AddEventScreen
+import com.rainyday.momentapp.features.events.ui.screens.AddOrUpdateEventScreen
+import com.rainyday.momentapp.features.events.ui.screens.EventDetailsScreen
 
 @Composable
 fun RootNavGraph(
@@ -29,11 +33,48 @@ fun RootNavGraph(
             }
 
             composable(RootScreen.AddEvent.route) {
-                AddEventScreen(
+                AddOrUpdateEventScreen(
                     onClose = {
                         navHostController.popBackStack()
                     },
                     showSnackBar = showSnackBar
+                )
+            }
+
+            composable(
+                route = RootScreen.EventDetails.route,
+                arguments = listOf(
+                    navArgument(NavArgString.EVENT_ID) { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString(NavArgString.EVENT_ID) ?: return@composable
+
+                EventDetailsScreen(
+                    eventId = eventId,
+                    onEdit = { id ->
+                        navHostController.navigate(UpdateEvent.createRoute(id))
+                    },
+                    onClose = {
+                        navHostController.popBackStack()
+                    },
+                    showSnackBar = showSnackBar,
+                )
+            }
+
+            composable(
+                route = UpdateEvent.route,
+                arguments = listOf(
+                    navArgument(name = NavArgString.EVENT_ID) { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString(NavArgString.EVENT_ID) ?: return@composable
+
+                AddOrUpdateEventScreen(
+                    eventId = eventId,
+                    onClose = {
+                        navHostController.popBackStack()
+                    },
+                    showSnackBar = showSnackBar,
                 )
             }
         }
@@ -43,4 +84,21 @@ fun RootNavGraph(
 sealed class RootScreen(val route: String) {
     data object Home: RootScreen("home")
     data object AddEvent: RootScreen("add_event")
+    data object UpdateEvent: RootScreen("${NavArgString.EVENT_UPDATE}/{${NavArgString.EVENT_ID}}") {
+        fun createRoute(eventId: String): String {
+            return "${NavArgString.EVENT_UPDATE}/$eventId"
+        }
+    }
+    data object EventDetails: RootScreen("${NavArgString.EVENTS}/{${NavArgString.EVENT_ID}}") {
+        fun createRoute(eventId: String): String {
+            return "${NavArgString.EVENTS}/$eventId"
+        }
+    }
+
+}
+
+object NavArgString {
+    const val EVENT_ID = "eventId"
+    const val EVENTS = "events"
+    const val EVENT_UPDATE = "event_update"
 }

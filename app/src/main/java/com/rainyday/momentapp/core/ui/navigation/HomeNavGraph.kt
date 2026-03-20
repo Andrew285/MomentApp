@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.rainyday.momentapp.features.events.ui.screens.EventDetailsScreen
 import com.rainyday.momentapp.features.events.ui.screens.EventsScreen
 import com.rainyday.momentapp.features.stats.ui.screens.StatsScreen
 import com.rainyday.momentapp.features.wishlist.ui.screens.WishlistScreen
@@ -22,8 +23,8 @@ fun HomeNavGraph(
                     onAddEventScreenNavigate = {
                         rootNavHostController.navigate(RootScreen.AddEvent.route)
                     },
-                    onEventDetailsScreenNavigate = {
-
+                    onEventDetailsScreenNavigate = { id ->
+                        rootNavHostController.navigate(RootScreen.EventDetails.createRoute(id))
                     }
                 )
             }
