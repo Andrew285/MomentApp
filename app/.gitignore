@@ -31,6 +31,7 @@ release-keystore.jks
 upload-keystore.jks
 
 # ─── Secrets & API keys (CRITICAL - never commit!) ────────
+app/google-services.json
 google-services.json       # contains Firebase project info
 secrets.properties
 apikeys.properties
@@ -62,3 +63,4 @@ captures/
 # ─── Lint ─────────────────────────────────────────────────
 lint/
 *.lint.xml
+/google-services.json

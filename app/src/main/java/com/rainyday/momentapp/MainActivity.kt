@@ -4,44 +4,46 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.rainyday.momentapp.ui.theme.MomentAppTheme
+import androidx.navigation.compose.rememberNavController
+import com.rainyday.momentapp.core.ui.navigation.RootNavGraph
+import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MomentAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                val navController = rememberNavController()
+                val coroutineScope = rememberCoroutineScope()
+                val snackBarHostState = remember { SnackbarHostState() }
+
+                Scaffold(
+                    snackbarHost = {
+                        SnackbarHost(snackBarHostState)
+                    }
+                ) { paddingValues ->
+                    RootNavGraph(
+                        navHostController = navController,
+                        showSnackBar = { message ->
+                            coroutineScope.launch {
+                                snackBarHostState.showSnackbar(message)
+                            }
+                        },
+                        modifier = Modifier.padding(paddingValues)
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MomentAppTheme {
-        Greeting("Android")
     }
 }

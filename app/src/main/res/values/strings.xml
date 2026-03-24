@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">MomentApp</string>
+    <string name="our_story">Наша історія</string>
+    <string name="with_love_description">З любов\'ю❤️</string>
+    <string name="event_name">Назва події</string>
+    <string name="new_event">Нова подія</string>
+    <string name="edit_event">Оновити подію</string>
+    <string name="description">Опис</string>
+    <string name="date">Дата</string>
+    <string name="create_event">Створити подію</string>
+    <string name="event_title_placeholder">Романтична вечеря</string>
+    <string name="event_description_placeholder">Розкажіть про вашу подію...</string>
+    <string name="repeat">Повторити</string>
+    <string name="events_screen_empty_state">Скоріше додайте нові події, щоб зустрітись зі своєю коханою людиною 🥰</string>
+    <string name="snack_bar_event_create_success">Подія успішно створена!</string>
+    <string name="snack_bar_event_update_success">Подію успішно оновлено!</string>
+    <string name="snack_bar_event_delete_success">Подію успішно видалено!</string>
+    <string name="snack_bar_event_create_fail">Подія, на жаль, не додалась. Перевірте введені дані</string>
+    <string name="snack_bar_event_update_fail">Подію, на жаль, не оновлено. Перевірте введені дані</string>
+    <string name="snack_bar_event_delete_fail">Подію, на жаль, не видалено. Спробуйте ще раз</string>
+    <string name="snack_bar_unknown_error">Сталась невідома помилка. Спробуйте ще раз</string>
+    <string name="about_event">Про подію</string>
+    <string name="delete">Видалити</string>
+
+
+    <!--  Content Descriptions  -->
+    <string name="close_add_event_screen_content_description" translatable="false">"Close add event screen"</string>
 </resources>
