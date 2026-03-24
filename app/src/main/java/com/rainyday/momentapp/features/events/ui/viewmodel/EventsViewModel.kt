@@ -12,6 +12,7 @@ import com.rainyday.momentapp.features.events.domain.usecases.GetEventByIdUseCas
 import com.rainyday.momentapp.features.events.domain.usecases.UpdateEventUseCase
 import com.rainyday.momentapp.features.events.ui.intents.EventsListIntent
 import com.rainyday.momentapp.features.events.ui.state.AddOrUpdateEventUiState
+import com.rainyday.momentapp.features.events.ui.state.EventFormState
 import com.rainyday.momentapp.features.events.ui.state.EventsSideEffect
 import com.rainyday.momentapp.features.events.ui.state.EventsUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,11 +35,14 @@ class EventsViewModel @Inject constructor(
     private val getEventByIdUseCase: GetEventByIdUseCase,
 ): ViewModel() {
 
-    private val _eventsUiState = MutableStateFlow(EventsUiState())
+    private val _eventsUiState = MutableStateFlow<EventsUiState>(EventsUiState.Loading)
     val eventsUiState: StateFlow<EventsUiState> = _eventsUiState.asStateFlow()
 
-    private val _addOrUpdateEventUiState = MutableStateFlow(AddOrUpdateEventUiState())
+    private val _addOrUpdateEventUiState = MutableStateFlow<AddOrUpdateEventUiState>(AddOrUpdateEventUiState.Loading)
     val addOrUpdateEventUiState: StateFlow<AddOrUpdateEventUiState> = _addOrUpdateEventUiState.asStateFlow()
+
+    private val _eventFormState = MutableStateFlow(EventFormState())
+    val eventFormState: StateFlow<EventFormState> = _eventFormState.asStateFlow()
 
     private val _sideEffects = MutableSharedFlow<EventsSideEffect>()
     val sideEffects: SharedFlow<EventsSideEffect> = _sideEffects.asSharedFlow()
@@ -50,9 +54,11 @@ class EventsViewModel @Inject constructor(
     fun handleIntent(intent: EventsListIntent) {
         when (intent) {
             is EventsListIntent.PreLoadEventBeforeEditing -> preLoadEvent(intent.eventId)
+            is EventsListIntent.PreLoadEventBeforeCreating -> loadEmptyEvent()
             is EventsListIntent.LoadEvents -> loadEvents()
             is EventsListIntent.RefreshEvents -> refreshEvents()
             is EventsListIntent.SaveEvent -> saveEvent(intent.params)
+            is EventsListIntent.DeleteEvent -> deleteEvent(intent.id)
             is EventsListIntent.UpdateTitle -> updateTitle(intent.title)
             is EventsListIntent.UpdateDescription -> updateDescription(intent.description)
             is EventsListIntent.UpdateDate -> updateDate(intent.date)
@@ -62,77 +68,61 @@ class EventsViewModel @Inject constructor(
     fun preLoadEvent(eventId: String) {
         viewModelScope.launch {
             try {
-                val result = getEventByIdUseCase(eventId)
-                when (result) {
+
+                when (val result = getEventByIdUseCase(eventId)) {
                     is Result.Success -> {
-                        _addOrUpdateEventUiState.update {
-                            it.copy(
-                                title = result.data.title,
-                                description = result.data.description,
-                                image = "",
-                                dateTimeInMillis = result.data.date,
-                                dateTimeDisplay = "",
-                                location = "",
-                                dateError = "",
+                        val resultEvent = result.data
+                        _addOrUpdateEventUiState.value = AddOrUpdateEventUiState.Success(
+                            event = Event(
+                                id = resultEvent.id,
+                                title = resultEvent.title,
+                                description = resultEvent.description,
+                                date = resultEvent.date
                             )
-                        }
+                        )
+
+                        _eventFormState.value = EventFormState(
+                            id = resultEvent.id,
+                            title = resultEvent.title,
+                            description = resultEvent.description,
+                            dateInMillis = resultEvent.date
+                        )
                     }
                     is Result.Error -> {
-                        _addOrUpdateEventUiState.update {
-                            it.copy(
-                                title = "",
-                                description = "",
-                                image = "",
-                                dateTimeInMillis = 0,
-                                dateTimeDisplay = "",
-                                location = "",
-                                dateError = "",
-                            )
-                        }
+                        _addOrUpdateEventUiState.value = AddOrUpdateEventUiState.Error(result.message)
                     }
-                    is Result.Loading -> Unit
+                    is Result.Loading -> {
+                        _addOrUpdateEventUiState.value = AddOrUpdateEventUiState.Loading
+                    }
                 }
             } catch (e: Exception) {
-                Result.Error(e.message.toString())
+                _addOrUpdateEventUiState.value = AddOrUpdateEventUiState.Error(e.message.toString())
             }
         }
     }
 
+    fun loadEmptyEvent() {
+        _addOrUpdateEventUiState.value = AddOrUpdateEventUiState.Success(
+            event = Event(
+                id = "",
+                title = "",
+                description = "",
+                date = 0,
+            )
+        )
+        _eventFormState.value = EventFormState()
+    }
+
     fun loadEvents() {
         viewModelScope.launch {
-            _eventsUiState.update {
-                it.copy(
-                    isLoading = true
-                )
-            }
+            _eventsUiState.value = EventsUiState.Loading
 
             getActiveEvents()
                 .collect { result ->
                     when (result) {
-                        is Result.Success -> {
-                            _eventsUiState.update {
-                                it.copy(
-                                    events = result.data,
-                                    isLoading = false,
-                                    error = null
-                                )
-                            }
-                        }
-                        is Result.Error -> {
-                            _eventsUiState.update {
-                                it.copy(
-                                    error = result.message,
-                                    isLoading = false
-                                )
-                            }
-                        }
-                        is Result.Loading -> {
-                            _eventsUiState.update {
-                                it.copy(
-                                    isLoading = true
-                                )
-                            }
-                        }
+                        is Result.Success -> _eventsUiState.value = EventsUiState.Success(result.data, false)
+                        is Result.Error -> _eventsUiState.value = EventsUiState.Error(result.message)
+                        is Result.Loading -> _eventsUiState.value = EventsUiState.Loading
                     }
                 }
         }
@@ -140,66 +130,29 @@ class EventsViewModel @Inject constructor(
 
     fun refreshEvents() {
         viewModelScope.launch {
-            _eventsUiState.update {
-                it.copy(
-                    isRefreshing = true
-                )
-            }
+            _eventsUiState.value = EventsUiState.Refreshing
 
             getActiveEvents()
                 .collect { result ->
                     when (result) {
-                        is Result.Success -> {
-                            _eventsUiState.update {
-                                it.copy(
-                                    events = result.data,
-                                    isRefreshing = false,
-                                    error = null
-                                )
-                            }
-                        }
-                        is Result.Error -> {
-                            _eventsUiState.update {
-                                it.copy(
-                                    error = result.message,
-                                    isRefreshing = false
-                                )
-                            }
-                        }
-                        is Result.Loading -> {
-                            _eventsUiState.update {
-                                it.copy(
-                                    isRefreshing = true
-                                )
-                            }
-                        }
+                        is Result.Success -> _eventsUiState.value = EventsUiState.Success(result.data, false)
+                        is Result.Error -> _eventsUiState.value = EventsUiState.Error(result.message)
+                        is Result.Loading -> _eventsUiState.value = EventsUiState.Loading
                     }
                 }
         }
     }
 
     fun updateTitle(title: String) {
-        _addOrUpdateEventUiState.update {
-            it.copy(
-                title = title
-            )
-        }
+        _eventFormState.update { it.copy(title = title) }
     }
 
     fun updateDescription(description: String) {
-        _addOrUpdateEventUiState.update {
-            it.copy(
-                description = description
-            )
-        }
+        _eventFormState.update { it.copy(description = description) }
     }
 
     fun updateDate(date: Long) {
-        _addOrUpdateEventUiState.update {
-            it.copy(
-                dateTimeInMillis = date
-            )
-        }
+        _eventFormState.update { it.copy(dateInMillis = date) }
     }
 
     fun saveEvent(params: EventParamsRequest) {
@@ -215,18 +168,13 @@ class EventsViewModel @Inject constructor(
 
     fun createEvent(createEventParams: EventParamsRequest.CreateEventParamsReq) {
         viewModelScope.launch {
-            _eventsUiState.update { it.copy(isLoading = true) }
-
             try {
                 when (val result = createEventUseCase(createEventParams)) {
                     is Result.Success -> {
-                        _eventsUiState.update { it.copy(isLoading = false, error = null) }
-                        _addOrUpdateEventUiState.update{ AddOrUpdateEventUiState() }
                         _sideEffects.emit(EventsSideEffect.EventAddedSuccessfully)
                         _sideEffects.emit(EventsSideEffect.ReloadEvents)
                     }
                     is Result.Error -> {
-                        _eventsUiState.update { it.copy(isLoading = false, error = result.message) }
                         _sideEffects.emit(EventsSideEffect.EventAddedFailed)
                     }
                     is Result.Loading -> Unit
@@ -239,18 +187,13 @@ class EventsViewModel @Inject constructor(
 
     fun updateEvent(params: EventParamsRequest.UpdateEventParamsReq) {
         viewModelScope.launch {
-            _eventsUiState.update { it.copy(isLoading = true) }
-
             try {
                 when (val result = updateEventUseCase(params)) {
                     is Result.Success -> {
-                        _eventsUiState.update { it.copy(isLoading = false, error = null) }
-                        _addOrUpdateEventUiState.update{ AddOrUpdateEventUiState() }
                         _sideEffects.emit(EventsSideEffect.EventUpdatedSuccessfully)
                         _sideEffects.emit(EventsSideEffect.ReloadEvents)
                     }
                     is Result.Error -> {
-                        _eventsUiState.update { it.copy(isLoading = false, error = result.message) }
                         _sideEffects.emit(EventsSideEffect.EventUpdatedFailed)
                     }
                     is Result.Loading -> Unit
@@ -263,18 +206,13 @@ class EventsViewModel @Inject constructor(
 
     fun deleteEvent(id: String) {
         viewModelScope.launch {
-            _eventsUiState.update { it.copy(isLoading = true) }
-
             try {
                 when (val result = deleteEventUseCase(id)) {
                     is Result.Success -> {
-                        _eventsUiState.update { it.copy(isLoading = false, error = null) }
-                        _addOrUpdateEventUiState.update{ AddOrUpdateEventUiState() }
                         _sideEffects.emit(EventsSideEffect.EventDeletedSuccessfully)
                         _sideEffects.emit(EventsSideEffect.ReloadEvents)
                     }
                     is Result.Error -> {
-                        _eventsUiState.update { it.copy(isLoading = false, error = result.message) }
                         _sideEffects.emit(EventsSideEffect.EventDeletedFailed)
                     }
                     is Result.Loading -> Unit

@@ -2,8 +2,9 @@ package com.rainyday.momentapp.features.events.ui.state
 
 import com.rainyday.momentapp.features.events.domain.models.Event
 
-data class EventDetailsUiState(
-    val event: Event? = null,
-    val isLoading: Boolean = false,
-    val error: String? = null,
-)
+sealed interface EventDetailsUiState {
+    data object Empty: EventDetailsUiState
+    data object Loading: EventDetailsUiState
+    data class Success(val event: Event): EventDetailsUiState
+    data class Error(val message: String): EventDetailsUiState
+}

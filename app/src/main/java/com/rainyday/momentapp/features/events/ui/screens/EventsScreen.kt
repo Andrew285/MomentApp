@@ -2,40 +2,28 @@ package com.rainyday.momentapp.features.events.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.rainyday.momentapp.R
-import com.rainyday.momentapp.core.ui.components.BasicButton
-import com.rainyday.momentapp.core.ui.components.EmptyState
+import com.rainyday.momentapp.core.ui.components.EmptyContentState
 import com.rainyday.momentapp.core.ui.components.ErrorState
 import com.rainyday.momentapp.core.ui.components.LoadingContentState
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
@@ -56,6 +44,8 @@ fun EventsScreen(
     val uiState by eventsViewModel.eventsUiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
+        eventsViewModel.handleIntent(EventsListIntent.RefreshEvents)
+
         eventsViewModel.sideEffects.collect { sideEffect ->
             when (sideEffect) {
                 is EventsSideEffect.ReloadEvents -> {
@@ -87,18 +77,17 @@ fun EventsScreenContent(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        when {
-            uiState.isLoading && uiState.events.isEmpty() ->
-                LoadingContentState()
-
-            uiState.error != null && uiState.events.isEmpty() -> ErrorState(uiState.error) {
+        when (val state = uiState) {
+            is EventsUiState.Loading -> LoadingContentState()
+            is EventsUiState.Empty -> EmptyContentState()
+            is EventsUiState.Refreshing -> LoadingContentState()
+            is EventsUiState.Error -> ErrorState(state.message) {
                 onRefreshEvents()
             }
-            uiState.events.isEmpty() -> EmptyState()
-            else -> {
+            is EventsUiState.Success -> {
                 EventsListContent(
                     events = uiState.events,
-                    isRefreshing = uiState.isRefreshing,
+                    isRefreshing = state.isRefreshing,
                     onRefreshEvents = {
                         onRefreshEvents()
                     },
@@ -154,7 +143,7 @@ private fun EventsListContent(
 fun PreviewEventsScreen() {
     MomentAppTheme {
         EventsScreenContent(
-            uiState = EventsUiState(
+            uiState = EventsUiState.Success(
                 events = listOf(
                     Event(
                         id = "0",
@@ -174,7 +163,8 @@ fun PreviewEventsScreen() {
                         description = "Чудовий вечір у затишному ресторані з італійською кухнею. Замовили пасту карбонара та тірамісу. Атмосфера була нейовірна",
                         date = 1773532800
                     )
-                )
+                ),
+                isRefreshing = false,
             ),
             onAddEventScreenNavigate = { },
             onEventDetailsScreenNavigate = { },
@@ -188,9 +178,7 @@ fun PreviewEventsScreen() {
 fun PreviewEmptyEventsScreen() {
     MomentAppTheme {
         EventsScreenContent(
-            uiState = EventsUiState(
-                events = emptyList()
-            ),
+            uiState = EventsUiState.Empty,
             onAddEventScreenNavigate = { },
             onEventDetailsScreenNavigate = { },
             onRefreshEvents = { }
@@ -203,9 +191,7 @@ fun PreviewEmptyEventsScreen() {
 fun PreviewLoadingEventsScreen() {
     MomentAppTheme {
         EventsScreenContent(
-            uiState = EventsUiState(
-                isLoading = true
-            ),
+            uiState = EventsUiState.Loading,
             onAddEventScreenNavigate = { },
             onEventDetailsScreenNavigate = { },
             onRefreshEvents = { }
@@ -218,9 +204,7 @@ fun PreviewLoadingEventsScreen() {
 fun PreviewErrorEventsScreen() {
     MomentAppTheme {
         EventsScreenContent(
-            uiState = EventsUiState(
-                error = "Error 500: Internal Error"
-            ),
+            uiState = EventsUiState.Error(message = "Error 500: Internal Error"),
             onAddEventScreenNavigate = { },
             onEventDetailsScreenNavigate = { },
             onRefreshEvents = { }

@@ -13,5 +13,5 @@ interface IEventsRemoteRepository {
 
     suspend fun updateEvent(params: EventParamsRequest.UpdateEventParamsReq): com.rainyday.momentapp.core.data.models.Result<Event>
 
-    suspend fun deleteEvent(id: String): com.rainyday.momentapp.core.data.models.Result<Event>
+    suspend fun deleteEvent(id: String): com.rainyday.momentapp.core.data.models.Result<Boolean>
 }

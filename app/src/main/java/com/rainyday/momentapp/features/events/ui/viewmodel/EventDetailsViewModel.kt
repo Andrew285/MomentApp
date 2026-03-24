@@ -7,7 +7,6 @@ import com.rainyday.momentapp.features.events.ui.state.EventDetailsUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import com.rainyday.momentapp.core.data.models.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -18,42 +17,17 @@ class EventDetailsViewModel @Inject constructor(
     private val getEventByIdUseCase: GetEventByIdUseCase,
 ): ViewModel() {
 
-    private val _uiState = MutableStateFlow(EventDetailsUiState())
+    private val _uiState = MutableStateFlow<EventDetailsUiState>(EventDetailsUiState.Empty)
     val uiState: StateFlow<EventDetailsUiState> = _uiState.asStateFlow()
 
     fun getEventDetails(id: String) {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    isLoading = true,
-                )
-            }
+            _uiState.value = EventDetailsUiState.Loading
 
-            val eventResult = getEventByIdUseCase(id)
-            when (eventResult) {
-                is Result.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            event = eventResult.data,
-                            isLoading = false,
-                        )
-                    }
-                }
-                is Result.Error -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = it.error
-                        )
-                    }
-                }
-                is Result.Loading -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = true,
-                        )
-                    }
-                }
+            when (val eventResult = getEventByIdUseCase(id)) {
+                is Result.Success -> _uiState.value = EventDetailsUiState.Success(eventResult.data)
+                is Result.Error -> _uiState.value = EventDetailsUiState.Error(eventResult.message)
+                is Result.Loading -> _uiState.value = EventDetailsUiState.Loading
             }
         }
     }

@@ -115,13 +115,11 @@ class EventsRemoteRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteEvent(id: String): Result<Event> {
+    override suspend fun deleteEvent(id: String): Result<Boolean> {
         return try {
             val response = apiInstance.deleteEvent(id )
             if (response.isSuccessful && response.body()?.success == true) {
-                Result.Success(
-                    data = response.body()!!.data!!.toDomain()
-                )
+                Result.Success(data = true)
             } else {
                 Result.Error(
                     message = "Event deletion is failed"

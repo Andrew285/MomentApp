@@ -1,12 +1,9 @@
 package com.rainyday.momentapp.features.events.ui.state
 
-data class AddOrUpdateEventUiState(
-    val id: String = "",
-    val title: String = "",
-    val description: String = "",
-    val image: String? = null,
-    val dateTimeInMillis: Long = 0,
-    val dateTimeDisplay: String = "",
-    val location: String? = null,
-    val dateError: String? = "",
-)
+import com.rainyday.momentapp.features.events.domain.models.Event
+
+sealed interface AddOrUpdateEventUiState {
+    data object Loading: AddOrUpdateEventUiState
+    data class Success(val event: Event): AddOrUpdateEventUiState
+    data class Error(val message: String): AddOrUpdateEventUiState
+}

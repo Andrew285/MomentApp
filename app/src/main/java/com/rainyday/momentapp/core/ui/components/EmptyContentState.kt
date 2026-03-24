@@ -14,7 +14,7 @@ import com.rainyday.momentapp.R
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
 
 @Composable
-fun EmptyState() {
+fun EmptyContentState() {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -31,8 +31,8 @@ fun EmptyState() {
 
 @Preview
 @Composable
-fun PreviewEmptyState() {
+fun PreviewEmptyContentState() {
     MomentAppTheme {
-        EmptyState()
+        EmptyContentState()
     }
 }

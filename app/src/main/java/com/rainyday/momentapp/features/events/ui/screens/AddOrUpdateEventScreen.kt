@@ -29,6 +29,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.rainyday.momentapp.R
 import com.rainyday.momentapp.core.ui.components.BasicButton
 import com.rainyday.momentapp.core.ui.components.DateTimeComponent
+import com.rainyday.momentapp.core.ui.components.ErrorState
+import com.rainyday.momentapp.core.ui.components.LoadingContentState
 import com.rainyday.momentapp.core.ui.components.MultiLineTextFieldComponent
 import com.rainyday.momentapp.core.ui.components.TextFieldComponent
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
@@ -36,6 +38,7 @@ import com.rainyday.momentapp.features.events.domain.models.Event
 import com.rainyday.momentapp.features.events.domain.models.EventParamsRequest
 import com.rainyday.momentapp.features.events.ui.intents.EventsListIntent
 import com.rainyday.momentapp.features.events.ui.state.AddOrUpdateEventUiState
+import com.rainyday.momentapp.features.events.ui.state.EventFormState
 import com.rainyday.momentapp.features.events.ui.state.EventsSideEffect
 import com.rainyday.momentapp.features.events.ui.viewmodel.EventsViewModel
 
@@ -47,7 +50,9 @@ fun AddOrUpdateEventScreen(
     onClose: () -> Unit,
     showSnackBar: (String) -> Unit,
 ) {
-    val uiState by viewModel.addOrUpdateEventUiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.eventFormState.collectAsStateWithLifecycle()
+    val addOrUpdateEventUiState by viewModel.addOrUpdateEventUiState.collectAsStateWithLifecycle()
+
     val eventAddedSuccessfullyString = stringResource(R.string.snack_bar_event_create_success)
     val eventUpdatedSuccessfullyString = stringResource(R.string.snack_bar_event_update_success)
     val eventDeletedSuccessfullyString = stringResource(R.string.snack_bar_event_delete_success)
@@ -58,8 +63,11 @@ fun AddOrUpdateEventScreen(
 
     LaunchedEffect(Unit) {
         // preload event data before editing
-        eventId?.let {
-            viewModel.handleIntent(EventsListIntent.PreLoadEventBeforeEditing(it))
+        if (eventId.isNullOrEmpty()) {
+            viewModel.handleIntent(EventsListIntent.PreLoadEventBeforeCreating)
+        }
+        else {
+            viewModel.handleIntent(EventsListIntent.PreLoadEventBeforeEditing(eventId))
         }
 
         // collect side effects
@@ -94,29 +102,36 @@ fun AddOrUpdateEventScreen(
         }
     }
 
-
-    AddOrUpdateScreenContent(
-        uiState = uiState,
-        isEditing = eventId != null,
-        onTitleUpdated = { newTitle ->
-            viewModel.handleIntent(EventsListIntent.UpdateTitle(newTitle))
-        },
-        onDescriptionUpdated = { newDescription ->
-            viewModel.handleIntent(EventsListIntent.UpdateDescription(newDescription))
-        },
-        onDateUpdated = { selectedMillis ->
-            viewModel.handleIntent(EventsListIntent.UpdateDate(selectedMillis))
-        },
-        onSaveEvent = { params ->
-            viewModel.handleIntent(EventsListIntent.SaveEvent(params))
-        },
-        onClose = onClose
-    )
+    when (val state = addOrUpdateEventUiState) {
+        is AddOrUpdateEventUiState.Loading -> LoadingContentState()
+        is AddOrUpdateEventUiState.Error -> {
+            showSnackBar(state.message)
+        }
+        is AddOrUpdateEventUiState.Success -> {
+            AddOrUpdateScreenContent(
+                uiState = uiState,
+                isEditing = eventId != null,
+                onTitleUpdated = { newTitle ->
+                    viewModel.handleIntent(EventsListIntent.UpdateTitle(newTitle))
+                },
+                onDescriptionUpdated = { newDescription ->
+                    viewModel.handleIntent(EventsListIntent.UpdateDescription(newDescription))
+                },
+                onDateUpdated = { selectedMillis ->
+                    viewModel.handleIntent(EventsListIntent.UpdateDate(selectedMillis))
+                },
+                onSaveEvent = { params ->
+                    viewModel.handleIntent(EventsListIntent.SaveEvent(params))
+                },
+                onClose = onClose
+            )
+        }
+    }
 }
 
 @Composable
 fun AddOrUpdateScreenContent(
-    uiState: AddOrUpdateEventUiState,
+    uiState: EventFormState,
     isEditing: Boolean,
     onTitleUpdated: (String) -> Unit,
     onDescriptionUpdated: (String) -> Unit,
@@ -161,10 +176,10 @@ fun AddOrUpdateScreenContent(
             // Title
             TextFieldComponent(
                 title = stringResource(R.string.event_name),
-                textFieldValue = uiState.title,
+                textFieldValue = uiState.title ?: "",
                 placeholder = {
                     Text(
-                        text = stringResource(R.string.event_title_placeholder),
+                        text = uiState.title ?: stringResource(R.string.event_title_placeholder),
                         color = MaterialTheme.colorScheme.primary
                     )
                 },
@@ -176,10 +191,10 @@ fun AddOrUpdateScreenContent(
             // Description
             MultiLineTextFieldComponent(
                 title = stringResource(R.string.description),
-                textFieldValue = uiState.description,
+                textFieldValue = uiState.description ?: "",
                 placeholder = {
                     Text(
-                        text = stringResource(R.string.event_description_placeholder),
+                        text = uiState.description ?: stringResource(R.string.event_description_placeholder),
                         color = MaterialTheme.colorScheme.primary
                     )
                 },
@@ -191,7 +206,7 @@ fun AddOrUpdateScreenContent(
             // Date
             DateTimeComponent(
                 title = stringResource(R.string.date),
-                selectedDateInMilliseconds = uiState.dateTimeInMillis,
+                selectedDateInMilliseconds = uiState.dateInMillis ?: 0,
                 onSelectedDate = { selectedMillis ->
                     onDateUpdated(selectedMillis)
                 }
@@ -205,17 +220,17 @@ fun AddOrUpdateScreenContent(
                 onClick = {
                     val params = if (isEditing) {
                         EventParamsRequest.UpdateEventParamsReq(
-                            id = uiState.id,
-                            title = uiState.title,
-                            description = uiState.description,
-                            date = uiState.dateTimeInMillis,
+                            id = uiState.id ?: "",
+                            title = uiState.title ?: "",
+                            description = uiState.description ?: "",
+                            date = uiState.dateInMillis ?: 0,
                         )
                     }
                     else {
                         EventParamsRequest.CreateEventParamsReq(
-                            title = uiState.title,
-                            description = uiState.description,
-                            date = uiState.dateTimeInMillis,
+                            title = uiState.title ?: "",
+                            description = uiState.description ?: "",
+                            date = uiState.dateInMillis ?: 0,
                         )
                     }
                     onSaveEvent(params)
@@ -230,7 +245,7 @@ fun AddOrUpdateScreenContent(
 fun PreviewAddEventScreen() {
     MomentAppTheme {
         AddOrUpdateScreenContent(
-            uiState = AddOrUpdateEventUiState(),
+            uiState = EventFormState(),
             isEditing = false,
             onTitleUpdated = {},
             onDescriptionUpdated = {},

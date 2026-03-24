@@ -45,10 +45,15 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.size.Size
 import com.rainyday.momentapp.R
+import com.rainyday.momentapp.core.ui.components.EmptyContentState
 import com.rainyday.momentapp.core.ui.components.ErrorButton
+import com.rainyday.momentapp.core.ui.components.LoadingContentState
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
 import com.rainyday.momentapp.features.events.domain.models.Event
 import com.rainyday.momentapp.features.events.domain.models.EventParamsRequest
+import com.rainyday.momentapp.features.events.ui.intents.EventsListIntent
+import com.rainyday.momentapp.features.events.ui.state.EventDetailsUiState
+import com.rainyday.momentapp.features.events.ui.state.EventsSideEffect
 import com.rainyday.momentapp.features.events.ui.viewmodel.EventDetailsViewModel
 import com.rainyday.momentapp.features.events.ui.viewmodel.EventsViewModel
 
@@ -63,42 +68,43 @@ fun EventDetailsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val deleteEventSuccessfullyString = stringResource(R.string.snack_bar_event_delete_success)
+    val deleteEventFailedString = stringResource(R.string.snack_bar_event_delete_fail)
+
     LaunchedEffect(Unit) {
         viewModel.getEventDetails(eventId)
+
+        eventsViewModel.sideEffects.collect { sideEffect ->
+            when (sideEffect) {
+                EventsSideEffect.EventDeletedSuccessfully -> {
+                    showSnackBar(deleteEventSuccessfullyString)
+                    onClose()
+                }
+                EventsSideEffect.EventDeletedFailed -> {
+                    showSnackBar(deleteEventFailedString)
+                }
+                else -> Unit
+            }
+        }
     }
 
-
-    if (uiState.error != null) {
-        showSnackBar(uiState.error!!)
+    when (val state = uiState) {
+        is EventDetailsUiState.Empty -> EmptyContentState()
+        is EventDetailsUiState.Loading -> LoadingContentState()
+        is EventDetailsUiState.Error -> { showSnackBar(state.message) }
+        is EventDetailsUiState.Success -> {
+            EventDetailsScreenContent(
+                state.event,
+                onEdit = {
+                    onEdit(eventId)
+                },
+                onDelete = { id ->
+                    eventsViewModel.handleIntent(EventsListIntent.DeleteEvent(id))
+                },
+                onClose = onClose
+            )
+        }
     }
-    else if (uiState.event != null && !uiState.isLoading) {
-        EventDetailsScreenContent(
-            uiState.event!!,
-            onEdit = {
-                onEdit(eventId)
-            },
-            onDelete = { id ->
-                eventsViewModel.deleteEvent(id)
-            },
-            onClose = onClose
-        )
-    }
-    else if (uiState.isLoading) {
-        LoadingContentState()
-    }
-    else if (uiState.event == null) {
-        EmptyContentState()
-    }
-}
-
-@Composable
-fun LoadingContentState() {
-
-}
-
-@Composable
-fun EmptyContentState() {
-
 }
 
 @Composable

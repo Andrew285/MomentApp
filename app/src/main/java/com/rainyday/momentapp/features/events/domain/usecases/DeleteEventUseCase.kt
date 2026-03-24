@@ -8,7 +8,7 @@ import javax.inject.Inject
 class DeleteEventUseCase @Inject constructor(
     private val repository: IEventsRemoteRepository
 ) {
-    suspend operator fun invoke(id: String): Result<Event> {
+    suspend operator fun invoke(id: String): Result<Boolean> {
         return repository.deleteEvent(id)
     }
 }
