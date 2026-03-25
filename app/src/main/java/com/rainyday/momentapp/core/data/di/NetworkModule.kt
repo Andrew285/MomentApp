@@ -1,6 +1,8 @@
 package com.rainyday.momentapp.core.data.di
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.messaging.FirebaseMessaging
+import com.rainyday.momentapp.BuildConfig
 import com.rainyday.momentapp.features.events.data.remote.IEventsApiService
 import dagger.Module
 import dagger.Provides
@@ -25,7 +27,7 @@ object NetworkModule {
     fun getAuthInterceptor(): Interceptor = Interceptor { chain ->
         val token = runBlocking {
             FirebaseAuth.getInstance().currentUser
-                ?.getIdToken(false)
+                ?.getIdToken(true)
                 ?.await()
                 ?.token
         }
@@ -55,7 +57,7 @@ object NetworkModule {
     @Singleton
     fun getRetrofitInstance(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://api-sdb2xidraa-uc.a.run.app")
+            .baseUrl(BuildConfig.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -65,5 +67,11 @@ object NetworkModule {
     @Singleton
     fun getEventsApiService(retrofit: Retrofit): IEventsApiService {
         return retrofit.create(IEventsApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun getFirebaseMessagingInstance(): FirebaseMessaging {
+        return FirebaseMessaging.getInstance()
     }
 }

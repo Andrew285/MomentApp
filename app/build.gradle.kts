@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-parcelize")
     id("com.google.gms.google-services")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
@@ -25,8 +26,20 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            buildConfigField("boolean", "ENABLE_LOGS", "true")
+            buildConfigField("String", "BASE_URL", "\"https://api-sdb2xidraa-uc.a.run.app\"")
+        }
+
         release {
             isMinifyEnabled = false
+            isDebuggable = false
+            buildConfigField("boolean", "ENABLE_LOGS", "false")
+            buildConfigField("String", "BASE_URL", "\"https://api-sdb2xidraa-uc.a.run.app\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -38,11 +51,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
 
 dependencies {
+    // Timber
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Coil
     implementation("io.coil-kt.coil3:coil-compose:3.4.0")
@@ -62,6 +78,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-messaging")
 
     // Compose navigation
     val nav_version = "2.9.7"
