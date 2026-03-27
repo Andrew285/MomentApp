@@ -21,6 +21,16 @@
     <string name="snack_bar_unknown_error">Сталась невідома помилка. Спробуйте ще раз</string>
     <string name="about_event">Про подію</string>
     <string name="delete">Видалити</string>
+    <string name="email">Email</string>
+    <string name="email_placeholder">your_email@gmail.com</string>
+    <string name="password">Пароль</string>
+    <string name="password_placeholder">Введіть пароль</string>
+    <string name="register_title">Реєстрація</string>
+    <string name="register">Зареєструвати</string>
+    <string name="sign_in_title">Вхід</string>
+    <string name="sign_in">Увійти</string>
+    <string name="sign_in_successfully">Вітаємо, ви успішно увійшли!</string>
+    <string name="register_successfully">Вітаємо, ви успішно зареєструвались!</string>
 
 
     <!--  Content Descriptions  -->

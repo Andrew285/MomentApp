@@ -29,8 +29,8 @@ android {
         debug {
             isMinifyEnabled = false
             isDebuggable = true
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
+//            applicationIdSuffix = ".debug"
+//            versionNameSuffix = "-debug"
             buildConfigField("boolean", "ENABLE_LOGS", "true")
             buildConfigField("String", "BASE_URL", "\"https://api-sdb2xidraa-uc.a.run.app\"")
         }

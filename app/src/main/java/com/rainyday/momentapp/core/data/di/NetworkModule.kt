@@ -24,9 +24,9 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun getAuthInterceptor(): Interceptor = Interceptor { chain ->
+    fun getAuthInterceptor(firebaseAuth: FirebaseAuth): Interceptor = Interceptor { chain ->
         val token = runBlocking {
-            FirebaseAuth.getInstance().currentUser
+            firebaseAuth.currentUser
                 ?.getIdToken(true)
                 ?.await()
                 ?.token
@@ -73,5 +73,11 @@ object NetworkModule {
     @Singleton
     fun getFirebaseMessagingInstance(): FirebaseMessaging {
         return FirebaseMessaging.getInstance()
+    }
+
+    @Provides
+    @Singleton
+    fun getFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
     }
 }

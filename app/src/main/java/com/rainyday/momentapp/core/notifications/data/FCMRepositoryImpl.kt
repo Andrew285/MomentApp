@@ -1,6 +1,5 @@
 package com.rainyday.momentapp.core.notifications.data
 
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
 import com.rainyday.momentapp.core.notifications.data.remote.IFirebaseCloudMessagingApiService
 import com.rainyday.momentapp.core.notifications.data.remote.dto.SaveTokenRequest
