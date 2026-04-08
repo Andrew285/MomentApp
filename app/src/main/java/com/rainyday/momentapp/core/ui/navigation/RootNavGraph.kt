@@ -23,7 +23,7 @@ fun RootNavGraph(
 ) {
     NavHost(
         navController = navHostController,
-        startDestination = if (isAuthorized) RootScreen.Home.route else RootScreen.Auth,
+        startDestination = if (isAuthorized) RootScreen.Home.route else RootScreen.Auth.route,
         modifier = Modifier.fillMaxSize(),
         builder = {
 

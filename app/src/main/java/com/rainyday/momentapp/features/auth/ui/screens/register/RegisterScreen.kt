@@ -30,7 +30,7 @@ fun RegisterScreen(
     val userFormState by viewModel.authUserState.collectAsState()
 
     when (uiState) {
-        is AuthUiState.Loading -> LoadingContentState()
+        is AuthUiState.Loading -> Unit
         is AuthUiState.Error -> showSnackBar((uiState as AuthUiState.Error).message)
         is AuthUiState.Success -> {
             showSnackBar(stringResource(R.string.register_successfully))
@@ -65,6 +65,8 @@ fun AuthRegisterContent(
             .fillMaxSize()
     ) {
         AuthMainForm(
+            email = UserEmail(userFormState.email),
+            password = UserPassword(userFormState.password),
             confirmBtnText = stringResource(R.string.register_title),
             onConfirmBtn = {
                 onRegisterBtnClick(

@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -19,14 +22,19 @@ import com.rainyday.momentapp.R
 import com.rainyday.momentapp.core.ui.components.BasicButton
 import com.rainyday.momentapp.core.ui.components.TextFieldComponent
 import com.rainyday.momentapp.core.ui.theme.MomentAppTheme
+import com.rainyday.momentapp.features.auth.ui.viewmodels.UserEmail
+import com.rainyday.momentapp.features.auth.ui.viewmodels.UserPassword
 
 @Composable
 fun AuthMainForm(
+    email: UserEmail,
+    password: UserPassword,
     onEmailTextChanged: (String) -> Unit,
     onPasswordTextChanged: (String) -> Unit,
     confirmBtnText: String,
     onConfirmBtn: () -> Unit,
 ) {
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -40,7 +48,7 @@ fun AuthMainForm(
             // Email
             TextFieldComponent(
                 title = stringResource(R.string.email),
-                textFieldValue = "",
+                textFieldValue = email.data,
                 placeholder = {
                     Text(
                         text = stringResource(R.string.email_placeholder),
@@ -57,7 +65,7 @@ fun AuthMainForm(
             // Password
             TextFieldComponent(
                 title = stringResource(R.string.password),
-                textFieldValue = "",
+                textFieldValue = password.data,
                 placeholder = {
                     Text(
                         text = stringResource(R.string.password_placeholder),
@@ -87,6 +95,8 @@ fun AuthMainForm(
 fun PreviewAuthMainForm() {
     MomentAppTheme {
         AuthMainForm(
+            email = UserEmail(""),
+            password = UserPassword(""),
             confirmBtnText = "Почати подорож",
             onConfirmBtn = {},
             onEmailTextChanged = {},

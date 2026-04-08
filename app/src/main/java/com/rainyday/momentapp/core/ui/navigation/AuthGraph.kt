@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.google.firebase.auth.FirebaseAuth
 import com.rainyday.momentapp.features.auth.ui.screens.register.RegisterScreen
 import com.rainyday.momentapp.features.auth.ui.screens.register.SignInScreen
 
@@ -15,7 +16,11 @@ fun AuthGraph(
 ) {
     NavHost(
         navController = navHostController,
-        startDestination = AuthRoute.SignIn,
+        startDestination = if (FirebaseAuth.getInstance().currentUser != null) {
+            AuthRoute.SignIn.route
+        } else {
+            AuthRoute.Register.route
+        },
         builder = {
             composable(route = AuthRoute.SignIn.route) {
                 SignInScreen(

@@ -37,6 +37,10 @@ class AuthViewModel @Inject constructor(
     private val _authUserState = MutableStateFlow(AuthUserState())
     val authUserState: StateFlow<AuthUserState> = _authUserState.asStateFlow()
 
+    init {
+        isUserAuthorized()
+    }
+
     fun registerUser(userEmail: UserEmail, userPassword: UserPassword) {
         _uiState.value = AuthUiState.Loading
 

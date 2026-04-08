@@ -30,7 +30,7 @@ fun SignInScreen(
     val userFormState by viewModel.authUserState.collectAsState()
 
     when (uiState) {
-        is AuthUiState.Loading -> LoadingContentState()
+        is AuthUiState.Loading -> Unit
         is AuthUiState.Error -> showSnackBar((uiState as AuthUiState.Error).message)
         is AuthUiState.Success -> {
             showSnackBar(stringResource(R.string.sign_in_successfully))
@@ -41,7 +41,7 @@ fun SignInScreen(
     AuthSignInContent(
         userFormState = userFormState,
         onSignInBtnClick = { email, password ->
-            viewModel.registerUser(email, password)
+            viewModel.signInUser(email, password)
         },
         onEmailTextChanged = { newEmail ->
             viewModel.setOrUpdateEmail(newEmail)
@@ -65,6 +65,8 @@ fun AuthSignInContent(
             .fillMaxSize()
     ) {
         AuthMainForm(
+            email = UserEmail(userFormState.email),
+            password = UserPassword(userFormState.password),
             confirmBtnText = stringResource(R.string.sign_in),
             onConfirmBtn = {
                 onSignInBtnClick(
